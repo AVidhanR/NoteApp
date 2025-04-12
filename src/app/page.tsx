@@ -147,8 +147,14 @@ export default function Home() {
             id="dark-mode"
             checked={darkMode}
             onCheckedChange={setDarkMode}
-            className={cn(!darkMode ? 'border border-gray-300' : '')} // Conditionally apply border
-          />
+            className={cn(
+              'bg-input border border-border rounded-full h-6 w-12 flex items-center transition-colors',
+              darkMode ? 'data-[state=checked]:bg-teal-500' : '',
+              !darkMode ? 'border border-gray-300' : '' // Add a border in light mode
+            )}
+          >
+            <div className="bg-background rounded-full h-5 w-5 m-0.5 shadow-md transition-transform transform data-[state=checked]:translate-x-6" />
+          </Switch>
           <Icons.moon className="h-4 w-4 text-gray-500" />
         </div>
       </div>
@@ -274,4 +280,3 @@ const NoteItem: React.FC<NoteItemProps> = ({note, onEdit, onDelete}) => {
     </div>
   );
 };
-
