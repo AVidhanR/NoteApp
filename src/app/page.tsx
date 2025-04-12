@@ -1,6 +1,5 @@
 'use client';
 
-import {Calendar} from '@/components/ui/calendar';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Textarea} from '@/components/ui/textarea';
 import {Button} from '@/components/ui/button';
@@ -9,7 +8,6 @@ import {cn} from '@/lib/utils';
 import {format} from 'date-fns';
 import {Icons} from '@/components/icons';
 import {useToast} from '@/hooks/use-toast';
-import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion';
 
 type Note = {
   id: string;
@@ -63,11 +61,9 @@ const AllNotesThread: React.FC<{notes: Note[]}> = ({notes}) => {
 };
 
 export default function Home() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
   const {toast} = useToast();
-  const [showAllNotes, setShowAllNotes] = useState(false);
 
   useEffect(() => {
     // Load notes from local storage on component mount
@@ -82,19 +78,7 @@ export default function Home() {
     localStorage.setItem('chronicle-notes', JSON.stringify(notes));
   }, [notes]);
 
-  const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date);
-    setShowAllNotes(false); // Reset to calendar view when a date is selected
-  };
-
   const addNote = () => {
-    if (!selectedDate) {
-      toast({
-        title: 'Please select a date first.',
-        variant: 'destructive',
-      });
-      return;
-    }
     if (newNoteText.trim() === '') {
       toast({
         title: 'Note cannot be empty.',
@@ -103,7 +87,8 @@ export default function Home() {
       return;
     }
 
-    const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+    const currentDate = new Date();
+    const formattedDate = format(currentDate, 'yyyy-MM-dd');
 
     // Check if a note already exists for the selected date
     const existingNoteIndex = notes.findIndex(note => note.date === formattedDate);
@@ -148,64 +133,41 @@ export default function Home() {
     });
   };
 
-  const getNotesForDate = (date: Date | undefined) => {
-    if (!date) return [];
-    const formattedDate = format(date, 'yyyy-MM-dd');
-    return notes.filter(note => note.date === formattedDate);
-  };
+  const currentDate = new Date();
+  const formattedCurrentDate = format(currentDate, 'yyyy-MM-dd');
+  const notesForToday = notes.filter(note => note.date === formattedCurrentDate);
 
   return (
-    <div className="flex flex-col md:flex-row p-4 gap-4">
-      {/* Calendar Section */}
-      <Card className="w-full md:w-1/3">
-        <CardHeader>
-          <CardTitle>Calendar</CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} className="rounded-md border" />
-          <Button className="mt-4 w-full" onClick={() => setShowAllNotes(true)}>View All Notes</Button>
-        </CardContent>
-      </Card>
-
+    <div className="flex flex-col p-4 gap-4">
       {/* Notes Section */}
-      <Card className="w-full md:w-2/3">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>
-            {showAllNotes
-              ? 'All Notes'
-              : `Notes for ${selectedDate ? format(selectedDate, 'PPP') : 'Select a date'}`}
+            Notes for Today ({format(currentDate, 'PPP')})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          {showAllNotes ? (
-            <AllNotesThread notes={notes} />
-          ) : (
-            <>
-              {/* Note Creation */}
-              <div className="mb-4">
-                <Textarea
-                  value={newNoteText}
-                  onChange={e => setNewNoteText(e.target.value)}
-                  placeholder="Enter your note here"
-                  className="rounded-md border"
-                />
-                <Button onClick={addNote} className="mt-2">
-                  Add Note
-                </Button>
-              </div>
+          {/* Note Creation */}
+          <div className="mb-4">
+            <Textarea
+              value={newNoteText}
+              onChange={e => setNewNoteText(e.target.value)}
+              placeholder="Enter your note here"
+              className="rounded-md border"
+            />
+            <Button onClick={addNote} className="mt-2">
+              Add Note
+            </Button>
+          </div>
 
-              {/* Note Display */}
-              <div>
-                {getNotesForDate(selectedDate).length === 0 ? (
-                  <p className="text-muted-foreground">No notes for this date.</p>
-                ) : (
-                  getNotesForDate(selectedDate).map(note => (
-                    <NoteItem key={note.id} note={note} onEdit={editNote} onDelete={deleteNote} />
-                  ))
-                )}
-              </div>
-            </>
-          )}
+          {/* Note Display */}
+          <div>
+            {notesForToday.length === 0 ? (
+              <p className="text-muted-foreground">No notes for today.</p>
+            ) : (
+              <AllNotesThread notes={notes} />
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -261,4 +223,3 @@ const NoteItem: React.FC<NoteItemProps> = ({note, onEdit, onDelete}) => {
     </div>
   );
 };
-
