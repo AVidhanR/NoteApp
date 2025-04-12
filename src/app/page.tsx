@@ -92,12 +92,28 @@ export default function Home() {
     }
 
     const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-    const newNote: Note = {
-      id: generateId(),
-      date: formattedDate,
-      text: newNoteText,
-    };
-    setNotes([...notes, newNote]);
+
+    // Check if a note already exists for the selected date
+    const existingNoteIndex = notes.findIndex(note => note.date === formattedDate);
+
+    if (existingNoteIndex !== -1) {
+      // If a note exists, append the new text to the existing note
+      const updatedNotes = [...notes];
+      updatedNotes[existingNoteIndex] = {
+        ...updatedNotes[existingNoteIndex],
+        text: updatedNotes[existingNoteIndex].text + '\n' + newNoteText, // Append with a newline for separation
+      };
+      setNotes(updatedNotes);
+    } else {
+      // If no note exists, create a new note
+      const newNote: Note = {
+        id: generateId(),
+        date: formattedDate,
+        text: newNoteText,
+      };
+      setNotes([...notes, newNote]);
+    }
+
     setNewNoteText('');
     toast({
       title: 'Note added successfully!',
