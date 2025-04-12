@@ -10,6 +10,7 @@ import {format} from 'date-fns';
 import {Icons} from '@/components/icons';
 import {useToast} from '@/hooks/use-toast';
 import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion';
+import {summarizeDailyNotes} from '@/ai/flows/daily-summary';
 
 type Note = {
   id: string;
@@ -22,6 +23,36 @@ function generateId() {
 }
 
 const AllNotesThread: React.FC<{notes: Note[]}> = ({notes}) => {
+  const [summaries, setSummaries] = useState<{[date: string]: string}>({});
+
+  useEffect(() => {
+    const getSummaries = async () => {
+      const groupedNotes = notes.reduce((acc: {[key: string]: string[]}, note) => {
+        if (!acc[note.date]) {
+          acc[note.date] = [];
+        }
+        acc[note.date].push(note.text);
+        return acc;
+      }, {});
+
+      const summaryPromises = Object.entries(groupedNotes).map(async ([date, notesForDate]) => {
+        try {
+          const result = await summarizeDailyNotes({date: date, notes: notesForDate});
+          return [date, result.summary];
+        } catch (error) {
+          console.error(`Failed to summarize notes for ${date}:`, error);
+          return [date, 'Failed to generate summary.'];
+        }
+      });
+
+      const settledSummaries = await Promise.all(summaryPromises);
+      const newSummaries: {[date: string]: string} = Object.fromEntries(settledSummaries);
+      setSummaries(newSummaries);
+    };
+
+    getSummaries();
+  }, [notes]);
+
   const groupedNotes = notes.reduce((acc: {[key: string]: Note[]}, note) => {
     if (!acc[note.date]) {
       acc[note.date] = [];
@@ -38,6 +69,9 @@ const AllNotesThread: React.FC<{notes: Note[]}> = ({notes}) => {
           <AccordionItem key={date} value={date}>
             <AccordionTrigger>{format(new Date(date), 'PPP')}</AccordionTrigger>
             <AccordionContent>
+              <div className="mb-4 p-3 rounded-md shadow-sm bg-secondary">
+                <p className="text-sm">{summaries[date] || 'Generating summary...'}</p>
+              </div>
               {notesForDate.map(note => (
                 <div key={note.id} className="mb-2 p-3 rounded-md shadow-sm bg-secondary">
                   <p className="text-sm">{note.text}</p>
@@ -233,3 +267,4 @@ const NoteItem: React.FC<NoteItemProps> = ({note, onEdit, onDelete}) => {
     </div>
   );
 };
+
