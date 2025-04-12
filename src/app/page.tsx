@@ -261,3 +261,4 @@ const NoteItem: React.FC<NoteItemProps> = ({note, onEdit, onDelete}) => {
     </div>
   );
 };
+
