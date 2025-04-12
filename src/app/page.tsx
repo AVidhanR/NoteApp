@@ -31,22 +31,22 @@ const AllNotesThread: React.FC<{notes: Note[]}> = ({notes}) => {
   }, {});
 
   return (
-    <Accordion type="single" collapsible>
+    <div className="space-y-4">
       {Object.entries(groupedNotes)
         .sort((a, b) => b[0].localeCompare(a[0]))
         .map(([date, notesForDate]) => (
-          <AccordionItem key={date} value={date}>
-            <AccordionTrigger>{format(new Date(date), 'PPP')}</AccordionTrigger>
-            <AccordionContent>
+          <div key={date} className="border-b pb-4">
+            <h3 className="text-lg font-semibold mb-2">{format(new Date(date), 'PPP')}</h3>
+            <div className="ml-4 space-y-2">
               {notesForDate.map(note => (
-                <div key={note.id} className="mb-2 p-3 rounded-md shadow-sm bg-secondary">
-                  <p className="text-sm">{note.text}</p>
+                <div key={note.id} className="p-3 rounded-md shadow-sm bg-secondary text-sm">
+                  {note.text}
                 </div>
               ))}
-            </AccordionContent>
-          </AccordionItem>
+            </div>
+          </div>
         ))}
-    </Accordion>
+    </div>
   );
 };
 
