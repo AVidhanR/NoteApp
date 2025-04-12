@@ -9,6 +9,7 @@ import {cn} from '@/lib/utils';
 import {format} from 'date-fns';
 import {Icons} from '@/components/icons';
 import {useToast} from '@/hooks/use-toast';
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion';
 
 type Note = {
   id: string;
@@ -20,11 +21,41 @@ function generateId() {
   return Math.random().toString(36).substring(2, 15);
 }
 
+const AllNotesThread: React.FC<{notes: Note[]}> = ({notes}) => {
+  const groupedNotes = notes.reduce((acc: {[key: string]: Note[]}, note) => {
+    if (!acc[note.date]) {
+      acc[note.date] = [];
+    }
+    acc[note.date].push(note);
+    return acc;
+  }, {});
+
+  return (
+    <Accordion type="single" collapsible>
+      {Object.entries(groupedNotes)
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .map(([date, notesForDate]) => (
+          <AccordionItem key={date} value={date}>
+            <AccordionTrigger>{format(new Date(date), 'PPP')}</AccordionTrigger>
+            <AccordionContent>
+              {notesForDate.map(note => (
+                <div key={note.id} className="mb-2 p-3 rounded-md shadow-sm bg-secondary">
+                  <p className="text-sm">{note.text}</p>
+                </div>
+              ))}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+    </Accordion>
+  );
+};
+
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
   const {toast} = useToast();
+  const [showAllNotes, setShowAllNotes] = useState(false);
 
   useEffect(() => {
     // Load notes from local storage on component mount
@@ -41,6 +72,7 @@ export default function Home() {
 
   const handleDateSelect = (date: Date | undefined) => {
     setSelectedDate(date);
+    setShowAllNotes(false); // Reset to calendar view when a date is selected
   };
 
   const addNote = () => {
@@ -103,6 +135,7 @@ export default function Home() {
         </CardHeader>
         <CardContent className="p-4">
           <Calendar mode="single" selected={selectedDate} onSelect={handleDateSelect} className="rounded-md border" />
+          <Button className="mt-4 w-full" onClick={() => setShowAllNotes(true)}>View All Notes</Button>
         </CardContent>
       </Card>
 
@@ -110,33 +143,41 @@ export default function Home() {
       <Card className="w-full md:w-2/3">
         <CardHeader>
           <CardTitle>
-            Notes for {selectedDate ? format(selectedDate, 'PPP') : 'Select a date'}
+            {showAllNotes
+              ? 'All Notes'
+              : `Notes for ${selectedDate ? format(selectedDate, 'PPP') : 'Select a date'}`}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4">
-          {/* Note Creation */}
-          <div className="mb-4">
-            <Textarea
-              value={newNoteText}
-              onChange={e => setNewNoteText(e.target.value)}
-              placeholder="Enter your note here"
-              className="rounded-md border"
-            />
-            <Button onClick={addNote} className="mt-2">
-              Add Note
-            </Button>
-          </div>
+          {showAllNotes ? (
+            <AllNotesThread notes={notes} />
+          ) : (
+            <>
+              {/* Note Creation */}
+              <div className="mb-4">
+                <Textarea
+                  value={newNoteText}
+                  onChange={e => setNewNoteText(e.target.value)}
+                  placeholder="Enter your note here"
+                  className="rounded-md border"
+                />
+                <Button onClick={addNote} className="mt-2">
+                  Add Note
+                </Button>
+              </div>
 
-          {/* Note Display */}
-          <div>
-            {getNotesForDate(selectedDate).length === 0 ? (
-              <p className="text-muted-foreground">No notes for this date.</p>
-            ) : (
-              getNotesForDate(selectedDate).map(note => (
-                <NoteItem key={note.id} note={note} onEdit={editNote} onDelete={deleteNote} />
-              ))
-            )}
-          </div>
+              {/* Note Display */}
+              <div>
+                {getNotesForDate(selectedDate).length === 0 ? (
+                  <p className="text-muted-foreground">No notes for this date.</p>
+                ) : (
+                  getNotesForDate(selectedDate).map(note => (
+                    <NoteItem key={note.id} note={note} onEdit={editNote} onDelete={deleteNote} />
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
