@@ -147,6 +147,7 @@ export default function Home() {
             id="dark-mode"
             checked={darkMode}
             onCheckedChange={setDarkMode}
+            className={cn(!darkMode ? 'border border-gray-300' : '')} // Conditionally apply border
           />
           <Icons.moon className="h-4 w-4 text-gray-500" />
         </div>
@@ -273,3 +274,4 @@ const NoteItem: React.FC<NoteItemProps> = ({note, onEdit, onDelete}) => {
     </div>
   );
 };
+
