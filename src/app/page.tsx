@@ -29,31 +29,28 @@ const AllNotesThread: React.FC<{notes: Note[]}> = ({notes}) => {
   }, {});
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {Object.entries(groupedNotes)
         .sort((a, b) => b[0].localeCompare(a[0]))
         .map(([date, notesForDate]) => (
-          <div key={date}>
+          <div key={date} className="mb-4">
             <h3 className="text-lg font-semibold mb-2">{format(new Date(date), 'PPP')}</h3>
-            <div className="relative">
-              {notesForDate.map((note, index) => (
-                <div
-                  key={note.id}
-                  className={cn(
-                    'relative p-3 rounded-md shadow-sm bg-secondary text-sm mb-2 last:mb-0',
-                    index !== notesForDate.length - 1 && 'border-b border-border'
-                  )}
-                >
-                  {/* Vertical line connecting the notes */}
+            {notesForDate.map((note, index) => (
+              <div
+                key={note.id}
+                className="flex items-start py-2 border-b border-border last:border-none"
+              >
+                {/* Thread line indicator */}
+                <div className="w-4 flex-shrink-0">
                   {index !== notesForDate.length - 1 && (
-                    <div className="absolute left-5 top-full h-full border-l border-border"></div>
+                    <div className="border-l border-border h-full ml-2"></div>
                   )}
-                  <div className="ml-4">
-                    <p>{note.text}</p>
-                  </div>
                 </div>
-              ))}
-            </div>
+                <div className="flex-grow">
+                  <p className="text-sm">{note.text}</p>
+                </div>
+              </div>
+            ))}
           </div>
         ))}
     </div>
@@ -114,22 +111,6 @@ export default function Home() {
     setNewNoteText('');
     toast({
       title: 'Note added successfully!',
-    });
-  };
-
-  const editNote = (id: string, newText: string) => {
-    const updatedNotes = notes.map(note => (note.id === id ? {...note, text: newText} : note));
-    setNotes(updatedNotes);
-    toast({
-      title: 'Note edited successfully!',
-    });
-  };
-
-  const deleteNote = (id: string) => {
-    const updatedNotes = notes.filter(note => note.id !== id);
-    setNotes(updatedNotes);
-    toast({
-      title: 'Note deleted successfully!',
     });
   };
 
