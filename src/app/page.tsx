@@ -31,16 +31,28 @@ const AllNotesThread: React.FC<{notes: Note[]}> = ({notes}) => {
   }, {});
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {Object.entries(groupedNotes)
         .sort((a, b) => b[0].localeCompare(a[0]))
         .map(([date, notesForDate]) => (
-          <div key={date} className="border-b pb-4">
+          <div key={date}>
             <h3 className="text-lg font-semibold mb-2">{format(new Date(date), 'PPP')}</h3>
-            <div className="ml-4 space-y-2">
-              {notesForDate.map(note => (
-                <div key={note.id} className="p-3 rounded-md shadow-sm bg-secondary text-sm">
-                  {note.text}
+            <div className="relative">
+              {notesForDate.map((note, index) => (
+                <div
+                  key={note.id}
+                  className={cn(
+                    'relative p-3 rounded-md shadow-sm bg-secondary text-sm mb-2 last:mb-0',
+                    index !== notesForDate.length - 1 && 'border-b border-border'
+                  )}
+                >
+                  {/* Vertical line connecting the notes */}
+                  {index !== notesForDate.length - 1 && (
+                    <div className="absolute left-5 top-full h-full border-l border-border"></div>
+                  )}
+                  <div className="ml-4">
+                    <p>{note.text}</p>
+                  </div>
                 </div>
               ))}
             </div>
