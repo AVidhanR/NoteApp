@@ -8,6 +8,7 @@ import {cn} from '@/lib/utils';
 import {format} from 'date-fns';
 import {Icons} from '@/components/icons';
 import {useToast} from '@/hooks/use-toast';
+import {Switch} from '@/components/ui/switch';
 
 type Note = {
   id: string;
@@ -61,6 +62,14 @@ export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
   const {toast} = useToast();
+  const [viewAllNotes, setViewAllNotes] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.toggle('dark', darkMode);
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     // Load notes from local storage on component mount
@@ -118,8 +127,31 @@ export default function Home() {
   const formattedCurrentDate = format(currentDate, 'yyyy-MM-dd');
   const notesForToday = notes.filter(note => note.date === formattedCurrentDate);
 
+  const deleteAllNotesForToday = () => {
+    const updatedNotes = notes.filter(note => note.date !== formattedCurrentDate);
+    setNotes(updatedNotes);
+    toast({
+      title: 'Notes for today deleted successfully!',
+    });
+  };
+
   return (
     <div className="flex flex-col p-4 gap-4">
+      <div className="flex justify-between items-center">
+        <Button onClick={() => setViewAllNotes(!viewAllNotes)}>
+          {viewAllNotes ? 'Hide all notes' : 'View all notes'}
+        </Button>
+        <div className="flex items-center space-x-2">
+          <Icons.sun className="h-4 w-4 text-yellow-500" />
+          <Switch
+            id="dark-mode"
+            checked={darkMode}
+            onCheckedChange={setDarkMode}
+          />
+          <Icons.moon className="h-4 w-4 text-gray-500" />
+        </div>
+      </div>
+
       {/* Notes Section */}
       <Card className="w-full">
         <CardHeader>
@@ -146,11 +178,48 @@ export default function Home() {
             {notesForToday.length === 0 ? (
               <p className="text-muted-foreground">No notes for today.</p>
             ) : (
-              <AllNotesThread notes={notes} />
+              <div>
+                {notesForToday.map((note, index) => (
+                  <div
+                    key={note.id}
+                    className="flex items-start py-2 border-b border-border last:border-none"
+                  >
+                    {/* Thread line indicator */}
+                    <div className="w-4 flex-shrink-0">
+                      {index !== notesForToday.length - 1 && (
+                        <div className="border-l border-border h-full ml-2"></div>
+                      )}
+                    </div>
+                    <div className="flex-grow">
+                      <p className="text-sm">{note.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
+          {notesForToday.length > 0 && (
+            <Button variant="destructive" onClick={deleteAllNotesForToday} className="mt-4">
+              Delete All Notes for Today
+            </Button>
+          )}
         </CardContent>
       </Card>
+
+      {viewAllNotes && (
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>All Notes</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            {notes.length === 0 ? (
+              <p className="text-muted-foreground">No notes available.</p>
+            ) : (
+              <AllNotesThread notes={notes} />
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
